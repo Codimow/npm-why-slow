@@ -1,6 +1,6 @@
 {
   "name": "@codimow/npm-why-slow",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Diagnose slow npm/pnpm/yarn installations",
   "type": "module",
   "bin": {
