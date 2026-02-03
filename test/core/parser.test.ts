@@ -42,4 +42,30 @@ describe('Parser', () => {
         expect(metrics.networkTime).toBe(300);
         expect(Object.keys(metrics.packages).length).toBe(2);
     });
+    it('should split scoped packages name correctly in npm', () => {
+        const metrics = createEmptyMetrics('npm');
+        const line = 'npm http fetch GET 200 https://registry.npmjs.org/@types%2fnode 50ms';
+        parseLine('npm', line, metrics);
+        expect(metrics.packages['@types/node']).toBeDefined();
+    });
+
+    it('should parse pnpm ndjson events', () => {
+        const metrics = createEmptyMetrics('pnpm');
+
+        // Resolution stage
+        parseLine('pnpm', '{"name":"pnpm:stage","stage":"resolution_done","duration":500}', metrics);
+        expect(metrics.stages.resolution).toBe(500);
+
+        // Fetching
+        parseLine('pnpm', '{"name":"pnpm:fetching","status":"done","pkg":{"name":"react","version":"18.0.0"},"duration":200}', metrics);
+        expect(metrics.networkTime).toBe(200);
+        expect(metrics.packages['react']).toBeDefined();
+        expect(metrics.packages['react'].downloadDuration).toBe(200);
+
+        // Hook (postinstall)
+        parseLine('pnpm', '{"name":"pnpm:hook","hook":"postinstall","pkg":{"name":"esbuild-linux-64","version":"0.14.0"},"duration":300}', metrics);
+        expect(metrics.cpuTime).toBe(300);
+        expect(metrics.packages['esbuild-linux-64']).toBeDefined();
+        expect(metrics.packages['esbuild-linux-64'].scriptDuration).toBe(300);
+    });
 });

@@ -12,6 +12,9 @@ export const runPackageManager = (pm: PackageManager, args: string[], updateMetr
             extraArgs.push('--verbose');
         }
         // TODO: Add pnpm/yarn specifics
+        if (pm.type === 'pnpm' && !extraArgs.includes('--reporter=ndjson')) {
+            extraArgs.push('--reporter=ndjson');
+        }
 
         const child = spawn(pm.command, extraArgs, {
             stdio: ['inherit', 'pipe', 'pipe'],
