@@ -15,6 +15,7 @@ export const run = Effect.gen(function* (_) {
     program
         .command('install')
         .description('Run install with full instrumentation')
+        .allowUnknownOption()
         .argument('[args...]', 'Arguments to pass to the package manager')
         .action(async (args) => {
             await Effect.runPromise(Effect.gen(function* (_) {

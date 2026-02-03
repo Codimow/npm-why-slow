@@ -2,6 +2,7 @@ import { Effect, Console } from 'effect';
 import { detectPackageManager } from '../package-managers/detector.js';
 import { runPackageManager } from '../package-managers/runner.js';
 import { createEmptyMetrics, InstallMetrics } from '../metrics/index.js';
+import { parseLine } from './parser.js';
 
 export const analyzeInstall = (args: string[]) => Effect.gen(function* (_) {
     yield* Console.log('🔍 Detecting package manager...');
@@ -13,7 +14,11 @@ export const analyzeInstall = (args: string[]) => Effect.gen(function* (_) {
     const start = Date.now();
 
     // TODO: Pass a stream collector to runPackageManager
-    yield* runPackageManager(pm, args);
+    const handleLine = (line: string) => {
+        parseLine(pm.type, line, metrics);
+    };
+
+    yield* runPackageManager(pm, ['install', ...args], handleLine);
 
     const end = Date.now();
     metrics.totalTime = end - start;
