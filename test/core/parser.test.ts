@@ -23,4 +23,11 @@ describe('Parser', () => {
         expect(metrics.networkTime).toBe(0);
         expect(metrics.ioTime).toBe(0);
     });
+
+    it('should parse npm script timing', () => {
+        const metrics = createEmptyMetrics('npm');
+        parseLine('npm', 'npm timing action:run-script Completed in 500ms', metrics);
+        expect(metrics.cpuTime).toBe(500);
+        expect(metrics.scriptDuration).toBe(500);
+    });
 });

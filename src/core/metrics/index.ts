@@ -14,6 +14,7 @@ export interface InstallMetrics {
     networkTime: number;
     ioTime: number;
     cpuTime: number;
+    scriptDuration?: number;
     packages: Record<string, PackageMetric>;
     stages: {
         resolution?: number;
