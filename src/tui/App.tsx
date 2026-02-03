@@ -26,6 +26,21 @@ const getTopSlowest = (packages: Record<string, PackageMetric>, n = 5): PackageM
         .slice(0, n);
 };
 
+/* Helper to analyze package bottleneck */
+const analyzeBottleneck = (pkg: PackageMetric) => {
+    const network = pkg.downloadDuration || 0;
+    const script = pkg.scriptDuration || 0;
+    const io = pkg.extractDuration || 0;
+
+    const parts = [];
+    if (network > 0) parts.push({ label: 'Net', time: network, icon: '🌐', color: 'blue' });
+    if (script > 0) parts.push({ label: 'Script', time: script, icon: '🔨', color: 'red' });
+    if (io > 0) parts.push({ label: 'IO', time: io, icon: '💾', color: 'yellow' });
+
+    // Sort by time desc
+    return parts.sort((a, b) => b.time - a.time);
+};
+
 export const App: React.FC<AppProps> = ({ metricsRef, linesRef, isRunning }) => {
     const [, forceUpdate] = useState(0);
 
@@ -65,14 +80,28 @@ export const App: React.FC<AppProps> = ({ metricsRef, linesRef, isRunning }) => 
                     <Text>Network: <Text color="blue">{(metrics.networkTime / 1000).toFixed(2)}s</Text></Text>
                     <Text>I/O: <Text color="yellow">{(metrics.ioTime / 1000).toFixed(2)}s</Text></Text>
 
+
+
                     {slowest.length > 0 && (
                         <Box flexDirection="column" marginTop={1}>
                             <Text bold color="red">🐢 Slowest Packages:</Text>
-                            {slowest.map((pkg, i) => (
-                                <Text key={i}>
-                                    {i + 1}. <Text color="white">{pkg.name}</Text> - {pkg.totalDuration}ms
-                                </Text>
-                            ))}
+                            {slowest.map((pkg, i) => {
+                                const analysis = analyzeBottleneck(pkg);
+                                return (
+                                    <Box key={i} flexDirection="column" marginLeft={2} marginBottom={1}>
+                                        <Text>
+                                            {i + 1}. <Text bold color="white">{pkg.name}</Text> <Text dimColor>({pkg.totalDuration}ms)</Text>
+                                        </Text>
+                                        <Box marginLeft={3}>
+                                            {analysis.map((part, idx) => (
+                                                <Text key={idx} color={part.color}>
+                                                    {part.icon} {part.time}ms{idx < analysis.length - 1 ? '  ' : ''}
+                                                </Text>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                     )}
                 </Box>

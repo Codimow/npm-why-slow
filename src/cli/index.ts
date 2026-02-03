@@ -3,7 +3,8 @@ import { Effect, Console } from 'effect';
 import { analyzeInstallWithContext, AnalyzeContext } from '../core/analyzer/index.js';
 import { createEmptyMetrics } from '../core/metrics/index.js';
 import { renderTUI } from '../tui/index.js';
-import pkg from '../../package.json';
+import { benchmarkRegistries } from '../core/registry/benchmark.js';
+import pkg from '../../package.json' with { type: 'json' };
 
 export const run = Effect.gen(function* (_) {
     const program = new Command();
@@ -69,6 +70,13 @@ export const run = Effect.gen(function* (_) {
         .description('Compare with previous runs')
         .action(async () => {
             console.log('Comparing runs...');
+        });
+
+    program
+        .command('benchmark')
+        .description('Check registry latency')
+        .action(async () => {
+            await Effect.runPromise(benchmarkRegistries);
         });
 
     yield* Effect.try({
