@@ -7,7 +7,7 @@ A CLI tool that instruments your package manager to identify installation bottle
 ## Installation
 
 ```bash
-npm install -g npm-why-slow
+npm i @codimow/npm-why-slow
 ```
 
 ## Usage
