@@ -1,27 +1,39 @@
-import { Effect, Console } from 'effect';
+import { Effect } from 'effect';
 import { detectPackageManager } from '../package-managers/detector.js';
 import { runPackageManager } from '../package-managers/runner.js';
 import { createEmptyMetrics, InstallMetrics } from '../metrics/index.js';
 import { parseLine } from './parser.js';
 
-export const analyzeInstall = (args: string[]) => Effect.gen(function* (_) {
-    yield* Console.log('🔍 Detecting package manager...');
-    const pm = yield* detectPackageManager;
-    yield* Console.log(`✓ Detected: ${pm.type}`);
+export interface AnalyzeContext {
+    metricsRef: { current: InstallMetrics };
+    linesRef: { current: string[] };
+    onUpdate?: () => void;
+}
 
-    yield* Console.log(`🚀 Running ${pm.command} install...`);
-    const metrics = createEmptyMetrics(pm.type);
+export const analyzeInstallWithContext = (args: string[], ctx: AnalyzeContext) => Effect.gen(function* (_) {
+    const pm = yield* detectPackageManager;
+    ctx.metricsRef.current = createEmptyMetrics(pm.type);
     const start = Date.now();
 
-    // TODO: Pass a stream collector to runPackageManager
     const handleLine = (line: string) => {
-        parseLine(pm.type, line, metrics);
+        ctx.linesRef.current.push(line);
+        parseLine(pm.type, line, ctx.metricsRef.current);
+        ctx.onUpdate?.();
     };
 
     yield* runPackageManager(pm, ['install', ...args], handleLine);
 
     const end = Date.now();
-    metrics.totalTime = end - start;
+    ctx.metricsRef.current.totalTime = end - start;
 
-    return metrics;
+    return ctx.metricsRef.current;
+});
+
+// Legacy function for non-TUI usage
+export const analyzeInstall = (args: string[]) => Effect.gen(function* (_) {
+    const ctx: AnalyzeContext = {
+        metricsRef: { current: createEmptyMetrics('unknown') },
+        linesRef: { current: [] },
+    };
+    return yield* analyzeInstallWithContext(args, ctx);
 });
